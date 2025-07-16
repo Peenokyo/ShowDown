@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Multiplayer Casino Game</title>
+  <script src="/socket.io/socket.io.js"></script>
+  <style>
+    body { background: #111; color: #fff; text-align: center; font-family: sans-serif; }
+    button { padding: 10px 20px; font-size: 16px; background: gold; border: none; }
+  </style>
+</head>
+<body>
+  <h1>🎲 Multiplayer Casino</h1>
+  <div id="game">
+    <input id="nameInput" placeholder="Enter your name" />
+    <button onclick="joinGame()">Join Game</button>
+  </div>
+
+  <script>
+    const socket = io();
+    let room = "";
+
+    function joinGame() {
+      const name = document.getElementById("nameInput").value.trim();
+      if (!name) return alert("Enter a name!");
+      socket.emit("join", name);
+    }
+
+    socket.on("start", (players) => {
+      document.getElementById("game").innerHTML = `
+        <h2>Game Started</h2>
+        <div id="players">
+          ${players.map(p => `<p>${p.name}: <span id="bal-${p.name}">${p.balance}</span> coins</p>`).join("")}
+        </div>
+        <button onclick="socket.emit('playRound', '${socket.id}')">Play Round</button>
+        <div id="result"></div>
+      `;
+    });
+
+    socket.on("roundResult", ({ result, balances }) => {
+      document.getElementById("result").innerText = result;
+      balances.forEach(p => {
+        const el = document.getElementById(`bal-${p.name}`);
+        if (el) el.innerText = p.balance;
+      });
+    });
+  </script>
+</body>
+</html>
